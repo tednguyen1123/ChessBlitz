@@ -1,0 +1,88 @@
+# ================================
+# OS-specific
+# ================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+Desktop.ini
+
+# ================================
+# Logs and temp files
+# ================================
+*.log
+*.tmp
+*.swp
+*.swo
+
+# ================================
+# Compiled files and caches
+# ================================
+*.class
+*.o
+*.out
+*.obj
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+.cache/
+*.egg-info/
+*.so
+*.dll
+*.exe
+
+# ================================
+# Virtual environments and package managers
+# ================================
+venv/
+.env/
+.env
+node_modules/
+.venv/
+.Python
+pip-wheel-metadata/
+
+# ================================
+# Dependency directories
+# ================================
+build/
+dist/
+target/
+.idea/
+.vscode/
+*.code-workspace
+
+# ================================
+# Test output and coverage
+# ================================
+coverage.xml
+*.cover
+.coverage
+htmlcov/
+test-output/
+pytest_cache/
+
+# ================================
+# Environment-specific / secrets
+# ================================
+.env
+.env.*
+secrets.yml
+config.yaml
+
+# ================================
+# Git-related
+# ================================
+*.orig
+*.rej
+
+# ================================
+# Misc
+# ================================
+*.bak
+*.old
+*.pid
+*.seed
+*.log.*
+
