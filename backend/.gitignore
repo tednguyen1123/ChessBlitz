@@ -1,34 +1,9 @@
-# Byte-compiled / optimized / DLL files
+chessblitzbackend
+test.py
+lichess_db_puzzle.csv.zst
+script.py
+testflask.py
+chessblitz-21d26-firebase-adminsdk-fbsvc-0d07eb59d5.json
+.env
+.DS_STORE
 __pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual environment
-venv/
-.env/          # In case you name it .env instead of venv
-.env           # Environment variables file
-
-# Flask-related
-instance/      # Flask instance folder (if used)
-*.db           # SQLite database file
-*.sqlite3
-*.log          # Log files
-
-# Pytest / Coverage / test stuff
-.coverage
-htmlcov/
-.cache/
-pytest_cache/
-
-# VS Code and other editor settings
-.vscode/
-*.code-workspace
-
-# Distribution / packaging
-build/
-dist/
-*.egg-info/
-
-# OS files
-.DS_Store
-Thumbs.db
