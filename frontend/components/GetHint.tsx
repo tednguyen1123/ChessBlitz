@@ -1,6 +1,8 @@
+import { API_URL } from "@/constants/urls";
+
 export async function fetchHint(puzzleId: string, moveNumber: number): Promise<string> {
     try {
-        const response = await fetch(`http://127.0.0.1:5000/puzzles/${puzzleId}/hints/${moveNumber}`);
+        const response = await fetch(`${API_URL}/puzzles/${puzzleId}/hints/${moveNumber}`);
         if (!response.ok) {
             // Handle HTTP errors
             const errorData = await response.json();

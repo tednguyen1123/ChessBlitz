@@ -1,6 +1,8 @@
+import { API_URL } from "@/constants/urls";
+
 export async function fetchRandomPuzzle(): Promise<any> {
   try {
-    const response = await fetch('http://127.0.0.1:5000/puzzles/random/');
+    const response = await fetch(`${API_URL}/puzzles/random/`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
