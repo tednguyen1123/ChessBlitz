@@ -31,7 +31,7 @@
 1. **Run the development server**:
 
     ```bash
-    uv run run-backend
+    uv run backend
     ```
 
     The API will be hosted at `http://localhost:5000` (or the port specified in `.env`).
