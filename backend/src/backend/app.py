@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS  # To handle cross-origin requests
 import requests
-from functions import *
+from backend.functions import *
 from typing import Dict, Any, Tuple
 from openai import OpenAI
 import os

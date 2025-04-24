@@ -1,8 +1,0 @@
-pyrebase4
-flask
-flask_cors
-google.generativeai
-openai
-setuptools
-dotenv
-chess
