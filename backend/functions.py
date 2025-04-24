@@ -2,8 +2,10 @@ import pyrebase
 from pyrebase.pyrebase import Database, Auth
 import random
 from typing import Dict, Any, Tuple, List
+import time
 import re
 import chess
+import chess.engine
 
 def fetch_puzzle(db: Database, puzzle_id: str) -> Dict[str, Any]:
     """Fetches puzzle id from Firebase Database with specified puzzle_id"""
@@ -19,6 +21,7 @@ def fetch_random_puzzle(db: Database) -> Dict[str, Any]:
     return result
 
 def fetch_puzzle_ids(db: Database) -> List[str]:
+    """fetches a list of puzzle ids"""
     return list(db.child("puzzles").shallow().get().val())
 
 def validate_puzzle_id(db: Database, puzzle_id: str) -> Tuple[bool, str]:
@@ -90,6 +93,49 @@ def sign_up(auth: Auth, email: str, password: str) -> Tuple[Dict[str, Any], str]
         message = f"Error: {e}"
         return None, message
     
+def sign_up_page(db: Database, userid: str, name: str, username: str, country: str) -> Tuple[Dict[str, Any], int]:
+    try:
+        user_data = {
+            "name": name,
+            "username": username,
+            "country": country,
+            "friends": []
+        }
+        db.child("users").child(userid).set(user_data)
+
+        time.sleep(5)
+        user_record = db.child("users").child(userid).get().val()
+        if user_record:
+            message = f"User created successfully: {user_record['username']}"
+            return jsonify({"message": message, "user": user_record}), 201
+        else:
+            return jsonify({"message": "User creation failed"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Error signing up: {e}"}), 500
+    
+def add_friends(db: Database, userid: str, friendid: str) -> Tuple[Dict[str, Any], int]:
+    try:
+        user = db.child("users").child(userid).get().val()
+        friend = db.child("users").child(friendid).get().val()
+
+        if not user:
+            return jsonify({"error": "User not found"}), 400
+        if not friend: 
+            return jsonify({"error": "Friend not found"}), 400
+        
+        friendlist = db.child("users").child(userid).child("friends").get().val() or {}
+
+        if friendid in friendlist:
+            return f"Already friends with: {friend['username']}"
+        
+        db.child("users").child(userid).child("friends").update({friendid: True})
+        db.child("users").child(friendid).child("friends").update({userid: True})
+
+        return jsonify({"message": f"Friend added successfully: {friend['username']}"}), 200
+    
+    except Exception as e:
+        return jsonify({"error": f"Error addding friend: {e}"}), 500
+
 def get_fen(fen: str, moves: list, move: int) -> str:
    """
    Returns the fen after move number of specified moves from the moves list applied to the original fen
@@ -146,3 +192,33 @@ def get_current_player(fen: str) -> str:
     board = chess.Board(fen)
 
     return "white" if board.turn else "black"
+
+def get_principal_variation(fen: str) -> list:
+    """returns a list of best moves"""
+    board = chess.Board(fen)
+    try:
+        with chess.engine.SimpleEngine.popen_uci(ENGINE_PATH) as engine:
+            info = engine.analyse(board, chess.engine.Limit(time=0.1))
+            return info["pv"]
+    except Exception as e:
+        return [f"Engine error: {e}"]
+    
+    
+def get_score(fen: str) -> str:
+    """returns a score object"""
+    board = chess.Board(fen)
+    try:
+        with chess.engine.SimpleEngine.popen_uci(ENGINE_PATH) as engine:
+            info = engine.analyse(board, chess.engine.Limit(time=0.1))
+            return info["score"]
+    except Exception as e:
+        return f"Engine error: {e}"
+
+def get_info(fen: str) -> dict:
+    """gets all the board info"""
+    board = chess.Board(fen)
+    try:
+        with chess.engine.SimpleEngine.popen_uci(ENGINE_PATH) as engine:
+            return engine.analyse(board, chess.engine.Limit(time=0.1))
+    except Exception as e:
+        return {"error": f"Engine error: {e}"}

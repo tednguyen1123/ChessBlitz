@@ -135,5 +135,53 @@ def sign_in_route() -> Tuple[Dict[str, Any], int]:
     else:
         return jsonify({"message": "Invalid credentials!"}), 400
 
+@app.route('/add_profile_info', methods=['POST'])
+def add_profile_info_route():
+    userUID = request.json.get('userUID')
+    name = request.json.get('name')
+    username = request.json.get('username')
+    country = request.json.get('country')
+
+    response = sign_up_page(db, userUID, name, username, country)
+    return response
+
+
+@app.route("/query", methods=["POST"])
+def query():
+   data = request.json
+   fen = data.get("fen")
+
+
+   if not fen:
+       return jsonify({"error": "FEN notation missing"}), 400
+
+
+   params = {"fen": fen, "depth": 15}
+   response = requests.get(STOCKFISH_API_URL, params=params)
+
+
+   if response.status_code == 200:
+       stockfish_data = response.json()
+       if stockfish_data.get("success"):
+           eval_score = stockfish_data.get("evaluation", "N/A")
+           depth_used = stockfish_data.get("depth", "N/A")  # Grab the depth
+           return jsonify({
+               "evaluation": eval_score,
+               "depth": depth_used
+           })
+       else:
+           return jsonify({"error": stockfish_data.get("data", "Unknown error")}), 400
+   else:
+       return jsonify({"error": "Stockfish API request failed."}), 500
+
+@app.route("/add-friend", methods=["POST"])
+def add_friend():
+    package = request.json
+    userId = package.get("userId")
+    friendId = package.get("friendId")
+
+    response = add_friends(db, userId, friendId)
+    return response
+
 if __name__ == "__main__":
     app.run(debug=False, host='0.0.0.0', port=os.getenv("PORT"))
