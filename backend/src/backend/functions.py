@@ -6,6 +6,7 @@ import time
 import re
 import chess
 import chess.engine
+from datetime import time, timedelta
 
 def fetch_puzzle(db: Database, puzzle_id: str) -> Dict[str, Any]:
     """Fetches puzzle id from Firebase Database with specified puzzle_id"""
@@ -99,7 +100,11 @@ def sign_up_page(db: Database, userid: str, name: str, username: str, country: s
             "name": name,
             "username": username,
             "country": country,
-            "friends": []
+            "friends": [],
+            "community": ["chess"],
+            "rating": 1000,
+            "streaks": 0,
+            "last_solved_date": None
         }
         db.child("users").child(userid).set(user_data)
 
@@ -222,3 +227,27 @@ def get_info(fen: str) -> dict:
             return engine.analyse(board, chess.engine.Limit(time=0.1))
     except Exception as e:
         return {"error": f"Engine error: {e}"}
+
+def update_streaks(db: Database, userid: str, puzzleid: str, correct: bool) -> None:
+    """updates the streaks of a user"""
+    user_ref = db.child("users").child(userid)
+    user_data = user_ref.get().val()   
+    
+    if not correct:
+        return   
+    
+    current_date = datetime.now().date()
+    streaks = user_data.get("streaks")
+    last_solved_date = user_data.get("last_solved_date")   
+    
+    if last_solved_date == current_date:
+        return
+    if last_solved_date and last_solved_date + timedelta(days=1) == current_date:
+        streaks += 1
+    else:
+        streaks = 1   
+
+    user_ref.update({
+        "streaks": streaks,
+        "last_solved_date": current_date
+    })
