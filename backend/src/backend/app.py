@@ -183,5 +183,9 @@ def add_friend():
     response = add_friends(db, userId, friendId)
     return response
 
+
+def main():
+    app.run(debug=False, host='0.0.0.0', port=int(os.getenv("PORT", 5000)))
+
 if __name__ == "__main__":
-    app.run(debug=False, host='0.0.0.0', port=os.getenv("PORT"))
+    main()
