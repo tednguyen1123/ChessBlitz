@@ -183,6 +183,37 @@ def add_friend():
     response = add_friends(db, userId, friendId)
     return response
 
+@app.route("/theme/<theme>", methods=["POST"])
+def apply_theme(theme: str, modelversion: str = "gpt-4-turbo") -> Tuple[Dict[str, Any], int]:
+    """Apply a thematic style to chess hint text."""
+    try:
+        # Get hint from request body
+        request_data = request.get_json()
+        if not request_data or 'hint' not in request_data:
+            return jsonify({"error": "Missing 'hint' in request body"}), 400
+        
+        hint = request_data['hint']
+        
+        # Validate inputs
+        if not hint.strip():
+            return jsonify({"error": "Hint cannot be empty"}), 400
+        if not theme.strip():
+            return jsonify({"error": "Theme cannot be empty"}), 400
+        
+        # Call OpenAI API to apply theme
+        response = openaiclient.responses.create(
+            model=modelversion,
+            temperature=0.7,
+            max_output_tokens=300,
+            instructions=f"You are a creative writer who can rewrite chess hints in different thematic styles while preserving the essential chess guidance.",
+            input=f"Please rewrite this chess hint in a {theme} theme while preserving the chess advice: '{hint}'. Keep it concise, within two lines."
+        )
+        
+        themed_hint = response.output_text if response else "Unable to apply theme to hint."
+        
+        return jsonify({"themed_hint": themed_hint}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error applying theme: {str(e)}"}), 500
 
 def main():
     app.run(debug=False, host='0.0.0.0', port=int(os.getenv("PORT", 5000)))
