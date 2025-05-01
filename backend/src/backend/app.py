@@ -245,6 +245,66 @@ def fetch_friends_leaderboard(userid):
     except Exception as exp:
         return jsonify({"error": f"Failed to retrieve friends leaderboard: {exp}"}), 500
 
+@app.route("/puzzles/ids", methods=["GET"])
+def get_puzzle_ids():
+    try:
+        ids = fetch_puzzle_ids(db)
+        return jsonify({"puzzle_ids": ids}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch puzzle IDs: {str(e)}"}), 500
+
+@app.route("/puzzles/pv", methods=["POST"])
+def get_principal_variation_route():
+    data = request.get_json()
+    fen = data.get("fen")
+    if not fen:
+        return jsonify({"error": "Missing 'fen' in request body"}), 400
+    try:
+        pv = get_principal_variation(fen)
+        return jsonify({"principal_variation": [str(move) for move in pv]}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to get principal variation: {str(e)}"}), 500
+
+@app.route("/puzzles/score", methods=["POST"])
+def get_score_route():
+    data = request.get_json()
+    fen = data.get("fen")
+    if not fen:
+        return jsonify({"error": "Missing 'fen' in request body"}), 400
+    try:
+        score = get_score(fen)
+        return jsonify({"score": str(score)}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to get score: {str(e)}"}), 500
+
+@app.route("/puzzles/info", methods=["POST"])
+def get_info_route():
+    data = request.get_json()
+    fen = data.get("fen")
+    if not fen:
+        return jsonify({"error": "Missing 'fen' in request body"}), 400
+    try:
+        info = get_info(fen)
+        return jsonify({"info": str(info)}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to get engine info: {str(e)}"}), 500
+
+@app.route("/user/streaks/update", methods=["POST"])
+def update_streaks_route():
+    data = request.get_json()
+    userid = data.get("userid")
+    puzzleid = data.get("puzzleid")
+    correct = data.get("correct")
+
+    if not all([userid, puzzleid, isinstance(correct, bool)]):
+        return jsonify({"error": "Missing or invalid parameters"}), 400
+
+    try:
+        update_streaks(db, userid, puzzleid, correct)
+        return jsonify({"message": "Streaks updated"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to update streaks: {str(e)}"}), 500
+
 def main():
     app.run(debug=False, host='0.0.0.0', port=int(os.getenv("PORT", 5000)))
 
