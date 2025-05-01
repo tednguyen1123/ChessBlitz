@@ -94,7 +94,7 @@ def sign_up(auth: Auth, email: str, password: str) -> Tuple[Dict[str, Any], str]
         message = f"Error: {e}"
         return None, message
     
-def sign_up_page(db: Database, userid: str, name: str, username: str, country: str) -> Tuple[Dict[str, Any], int]:
+def sign_up_page(db, userid: str, name: str, username: str, country: str) -> Tuple[Dict[str, Any], int]:
     try:
         user_data = {
             "name": name,
@@ -103,12 +103,15 @@ def sign_up_page(db: Database, userid: str, name: str, username: str, country: s
             "friends": [],
             "community": ["chess"],
             "rating": 1000,
+            "attempted": 0,
+            "solved": 0,
             "streaks": 0,
             "last_solved_date": None
         }
+
         db.child("users").child(userid).set(user_data)
 
-        time.sleep(5)
+        time.sleep(5)  # Ensure Firebase has time to update
         user_record = db.child("users").child(userid).get().val()
         if user_record:
             message = f"User created successfully: {user_record['username']}"
@@ -251,7 +254,7 @@ def get_info(fen: str) -> dict:
         return {"error": f"Engine error: {e}"}
 
 def update_streaks(db: Database, userid: str, puzzleid: str, correct: bool) -> None:
-    """updates the streaks of a user"""
+    """Updates the streaks of a user"""
     user_ref = db.child("users").child(userid)
     user_data = user_ref.get().val()   
     
@@ -273,6 +276,46 @@ def update_streaks(db: Database, userid: str, puzzleid: str, correct: bool) -> N
         "streaks": streaks,
         "last_solved_date": current_date
     })
+
+def update_rating(db, user_id: str, puzzle_rating: int, correct: bool) -> dict:
+    '''Updates the rating of a user'''
+    user_ref = db.child("users").child(user_id)
+    user_data = user_ref.get().val()
+
+    # Defaults
+    current_rating = user_data.get("rating", 1200)
+    attempted = user_data.get("attempted", 0)
+    solved = user_data.get("solved", 0)
+
+    # Compute expected score using Elo formula
+    expected_score = 1 / (1 + 10 ** ((puzzle_rating - current_rating) / 400))
+    actual_score = 1.0 if correct else 0.0
+
+    # Dynamic K-factor (optional: decrease as experience grows)
+    k = 32 if attempted < 30 else 16
+
+    # New rating
+    new_rating = current_rating + k * (actual_score - expected_score)
+    new_rating = round(new_rating)
+
+    # Update stats
+    attempted += 1
+    if correct:
+        solved += 1
+
+    # Write back to Firebase
+    user_ref.update({
+        "rating": new_rating,
+        "attempted": attempted,
+        "solved": solved
+    })
+
+    return {
+        "new_rating": new_rating,
+        "attempted": attempted,
+        "solved": solved,
+        "delta": round(k * (actual_score - expected_score), 2)
+    }
 
 def global_leaderboard(db, limit=25):
     '''Returns a global leaderboard of players'''
@@ -304,6 +347,7 @@ def global_leaderboard(db, limit=25):
     return leaderboard
 
 def community_leaderboard(db: Database, community_name: str, limit: int = 25) -> List[Dict[str, Any]]:
+    '''Returns a community leaderboard'''
     try:
         members = db.child("communities").child(community_name).child("members").get().val()
         if not members:
@@ -327,6 +371,7 @@ def community_leaderboard(db: Database, community_name: str, limit: int = 25) ->
         return [{"error": f"Failed to get community leaderboard: {e}"}]
 
 def friends_leaderboard(db: Database, userid: str, limit: int = 25) -> List[Dict[str, Any]]:
+    '''Returns a friends leaderboard'''
     try:
         user = db.child("users").child(userid).get().val()
         if not user or "friends" not in user:

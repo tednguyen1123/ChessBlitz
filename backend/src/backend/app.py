@@ -305,6 +305,30 @@ def update_streaks_route():
     except Exception as e:
         return jsonify({"error": f"Failed to update streaks: {str(e)}"}), 500
 
+@app.route('/user/update-rating', methods=['POST'])
+def update_rating():
+    try:
+        data = request.json
+        user_id = data.get("userId")
+        new_rating = data.get("rating")
+
+        if user_id is None or new_rating is None:
+            return jsonify({"error": "Missing userId or rating"}), 400
+
+        if not isinstance(new_rating, int) or new_rating < 0:
+            return jsonify({"error": "Rating must be a non-negative integer"}), 400
+
+        db.child("users").child(user_id).update({"rating": new_rating})
+
+        updated_user = db.child("users").child(user_id).get().val()
+        return jsonify({
+            "message": f"Rating updated to {new_rating}",
+            "user": updated_user
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to update rating: {str(e)}"}), 500
+
 def main():
     app.run(debug=False, host='0.0.0.0', port=int(os.getenv("PORT", 5000)))
 
