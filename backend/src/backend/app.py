@@ -215,6 +215,36 @@ def apply_theme(theme: str, modelversion: str = "gpt-4-turbo") -> Tuple[Dict[str
     except Exception as e:
         return jsonify({"error": f"Error applying theme: {str(e)}"}), 500
 
+# --- GLOBAL LEADERBOARD ENDPOINT ---
+@app.route('/leaderboard/global', methods=['GET'])
+def fetch_leaderboard():
+    '''Fetches leaderboard globally'''
+    try:
+        leaderboard = global_leaderboard(db)
+        return jsonify(leaderboard), 200
+    except Exception as exp:
+        return jsonify({"error": f"Failed to retrieve leaderboard: {exp}"}), 500
+
+# --- COMMUNITY LEADERBOARD ENDPOINT ---
+@app.route('/leaderboard/community/<string:community_name>', methods=['GET'])
+def fetch_community_leaderboard(community_name):
+    limit = int(request.args.get("limit", 25))
+    try:
+        leaderboard = community_leaderboard(db, community_name, limit)
+        return jsonify(leaderboard), 200
+    except Exception as exp:
+        return jsonify({"error": f"Failed to retrieve community leaderboard: {exp}"}), 500
+
+# --- FRIENDS LEADERBOARD ENDPOINT ---
+@app.route('/leaderboard/friends/<string:userid>', methods=['GET'])
+def fetch_friends_leaderboard(userid):
+    limit = int(request.args.get("limit", 25))
+    try:
+        leaderboard = friends_leaderboard(db, userid, limit)
+        return jsonify(leaderboard), 200
+    except Exception as exp:
+        return jsonify({"error": f"Failed to retrieve friends leaderboard: {exp}"}), 500
+
 def main():
     app.run(debug=False, host='0.0.0.0', port=int(os.getenv("PORT", 5000)))
 

@@ -141,6 +141,28 @@ def add_friends(db: Database, userid: str, friendid: str) -> Tuple[Dict[str, Any
     except Exception as e:
         return jsonify({"error": f"Error addding friend: {e}"}), 500
 
+def join_community(db: Database, userid: str, community_name: str) -> Tuple[Dict[str, Any], int]:
+    try:
+        # Get user
+        user = db.child("users").child(userid).get().val()
+        if not user:
+            return jsonify({"error": "User not found"}), 400
+
+        # Add community to user's profile if not already present
+        current_communities = set(user.get("community", []))
+        if community_name not in current_communities:
+            current_communities.add(community_name)
+            db.child("users").child(userid).update({"community": list(current_communities)})
+
+        # Add user to the community node in Firebase
+        community_members = db.child("communities").child(community_name).child("members").get().val() or {}
+        if userid not in community_members:
+            db.child("communities").child(community_name).child("members").update({userid: True})
+
+        return jsonify({"message": f"{user['username']} joined community '{community_name}'"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error joining community: {e}"}), 500
+
 def get_fen(fen: str, moves: list, move: int) -> str:
    """
    Returns the fen after move number of specified moves from the moves list applied to the original fen
@@ -251,3 +273,80 @@ def update_streaks(db: Database, userid: str, puzzleid: str, correct: bool) -> N
         "streaks": streaks,
         "last_solved_date": current_date
     })
+
+def global_leaderboard(db, limit=25):
+    '''Returns a global leaderboard of players'''
+    # Get all users from Firebase
+    users_data = db.child("users").get().val()
+    
+    # If no users are there
+    if not users_data:
+        return []
+
+    # Convert to list and sort by rating
+    sorted_rating = sorted(
+        users_data.items(),
+        key=lambda item: item[1].get("rating", 0),  # Default rating if missing
+        reverse=True
+    )
+
+    # Leaderboard with limited number of top users
+    leaderboard = []
+    for user_id, user_info in sorted_rating[:limit]:
+        leaderboard.append({
+            "userid": user_id,
+            "username": user_info.get("username", "Unknown"),
+            "rating": user_info.get("rating", 0),
+            "country": user_info.get("country", "N/A"),
+            "streaks": user_info.get("streaks", 0)
+        })
+
+    return leaderboard
+
+def community_leaderboard(db: Database, community_name: str, limit: int = 25) -> List[Dict[str, Any]]:
+    try:
+        members = db.child("communities").child(community_name).child("members").get().val()
+        if not members:
+            return []
+
+        leaderboard = []
+        for uid in members:
+            user_data = db.child("users").child(uid).get().val()
+            if user_data:
+                leaderboard.append({
+                    "userid": uid,
+                    "username": user_data.get("username", "Unknown"),
+                    "rating": user_data.get("rating", 0),
+                    "country": user_data.get("country", "N/A"),
+                    "streaks": user_data.get("streaks", 0)
+                })
+
+        sorted_leaderboard = sorted(leaderboard, key=lambda x: x["rating"], reverse=True)
+        return sorted_leaderboard[:limit]
+    except Exception as e:
+        return [{"error": f"Failed to get community leaderboard: {e}"}]
+
+def friends_leaderboard(db: Database, userid: str, limit: int = 25) -> List[Dict[str, Any]]:
+    try:
+        user = db.child("users").child(userid).get().val()
+        if not user or "friends" not in user:
+            return []
+
+        friends_dict = user.get("friends", {})
+        leaderboard = []
+
+        for friend_id in friends_dict:
+            friend_data = db.child("users").child(friend_id).get().val()
+            if friend_data:
+                leaderboard.append({
+                    "userid": friend_id,
+                    "username": friend_data.get("username", "Unknown"),
+                    "rating": friend_data.get("rating", 0),
+                    "country": friend_data.get("country", "N/A"),
+                    "streaks": friend_data.get("streaks", 0)
+                })
+
+        sorted_leaderboard = sorted(leaderboard, key=lambda x: x["rating"], reverse=True)
+        return sorted_leaderboard[:limit]
+    except Exception as e:
+        return [{"error": f"Failed to get friends leaderboard: {e}"}]
