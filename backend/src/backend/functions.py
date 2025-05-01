@@ -6,7 +6,8 @@ import time
 import re
 import chess
 import chess.engine
-from datetime import time, timedelta
+from datetime import datetime, time, timedelta
+from flask import jsonify
 
 def fetch_puzzle(db: Database, puzzle_id: str) -> Dict[str, Any]:
     """Fetches puzzle id from Firebase Database with specified puzzle_id"""
@@ -132,9 +133,8 @@ def add_friends(db: Database, userid: str, friendid: str) -> Tuple[Dict[str, Any
             return jsonify({"error": "Friend not found"}), 400
         
         friendlist = db.child("users").child(userid).child("friends").get().val() or {}
-
         if friendid in friendlist:
-            return f"Already friends with: {friend['username']}"
+            return jsonify({"message": "Already friends!"}), 400
         
         db.child("users").child(userid).child("friends").update({friendid: True})
         db.child("users").child(friendid).child("friends").update({userid: True})
@@ -142,7 +142,7 @@ def add_friends(db: Database, userid: str, friendid: str) -> Tuple[Dict[str, Any
         return jsonify({"message": f"Friend added successfully: {friend['username']}"}), 200
     
     except Exception as e:
-        return jsonify({"error": f"Error addding friend: {e}"}), 500
+        return jsonify({"error": f"Error adding friend: {e}"}), 500
 
 def join_community(db: Database, userid: str, community_name: str) -> Tuple[Dict[str, Any], int]:
     try:
@@ -223,32 +223,32 @@ def get_current_player(fen: str) -> str:
 
     return "white" if board.turn else "black"
 
-def get_principal_variation(fen: str) -> list:
+def get_principal_variation(fen: str, engine_path: str) -> list:
     """returns a list of best moves"""
     board = chess.Board(fen)
     try:
-        with chess.engine.SimpleEngine.popen_uci(ENGINE_PATH) as engine:
+        with chess.engine.SimpleEngine.popen_uci(engine_path) as engine:
             info = engine.analyse(board, chess.engine.Limit(time=0.1))
-            return info["pv"]
+            return info.get("pv", [])
     except Exception as e:
         return [f"Engine error: {e}"]
     
     
-def get_score(fen: str) -> str:
+def get_score(fen: str, engine_path: str) -> str:
     """returns a score object"""
     board = chess.Board(fen)
     try:
-        with chess.engine.SimpleEngine.popen_uci(ENGINE_PATH) as engine:
+        with chess.engine.SimpleEngine.popen_uci(engine_path) as engine:
             info = engine.analyse(board, chess.engine.Limit(time=0.1))
             return info["score"]
     except Exception as e:
         return f"Engine error: {e}"
 
-def get_info(fen: str) -> dict:
+def get_info(fen: str, engine_path: str) -> dict:
     """gets all the board info"""
     board = chess.Board(fen)
     try:
-        with chess.engine.SimpleEngine.popen_uci(ENGINE_PATH) as engine:
+        with chess.engine.SimpleEngine.popen_uci(engine_path) as engine:
             return engine.analyse(board, chess.engine.Limit(time=0.1))
     except Exception as e:
         return {"error": f"Engine error: {e}"}
