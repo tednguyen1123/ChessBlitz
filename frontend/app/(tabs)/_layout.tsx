@@ -8,43 +8,32 @@ import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { ThemedText } from '@/components/ThemedText';
+import { ThemeProvider } from '@/context/ThemeContext';
+import { Stack } from 'expo-router';
+import { useTheme } from '@/context/ThemeContext';
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const router = useRouter();
-
+export default function RootLayout() {
   return (
-    <Tabs screenOptions={{
-      animation: 'shift',
-      tabBarInactiveBackgroundColor: '#454A64',
-      tabBarActiveBackgroundColor: '#454A64',
-      tabBarInactiveTintColor: '#CDCDCD',
-      headerShown: true,
-      tabBarButton: HapticTab,
-      tabBarBackground: TabBarBackground,
-      tabBarStyle: Platform.select({
-        ios: {
-          // Use a transparent background on iOS to show the blur effect
-          position: 'absolute',
-          paddingBottom: 0,
-        },
-        default: {
-          paddingBottom: 0,
-        }
-      }),
-      headerStyle: {
-        backgroundColor: '#454A64',
-      },
-      headerTitleStyle: {
-        color: '#fff',
-      }
-    }}>
+    <Tabs
+      screenOptions={{
+        animation: 'shift',
+        headerShown: true, // Ensure the header (back button) is visible
+        tabBarStyle: Platform.select({
+          ios: {
+            position: 'absolute',
+            paddingBottom: 0,
+          },
+          default: {
+            paddingBottom: 0,
+          },
+        }),
+      }}
+    >
       <Tabs.Screen
         name="daily"
         options={{
           title: 'Daily',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name={"calendar"} color={color} />,            
-          tabBarActiveTintColor: '#93FF8F'
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -52,7 +41,6 @@ export default function TabLayout() {
         options={{
           title: 'Practice',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="puzzlepiece.extension" color={color} />,
-          tabBarActiveTintColor: '#94CFFF'
         }}
       />
       <Tabs.Screen
@@ -60,7 +48,6 @@ export default function TabLayout() {
         options={{
           title: 'Ranking',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="trophy" color={color} />,
-          tabBarActiveTintColor: '#FFF37E'
         }}
       />
       <Tabs.Screen
@@ -68,11 +55,82 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person" color={color} />,
-          tabBarActiveTintColor: '#FF7E7E'
+        }}
+      />
+      <Tabs.Screen
+        name="themes"
+        options={{
+          title: 'Themes',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person" color={color} />,
         }}
       />
     </Tabs>
-    
-    
+  );
+}
+
+export function TabLayout() {
+  const { theme } = useTheme();
+
+  return (
+    <Tabs
+      screenOptions={{
+        animation: 'shift',
+        tabBarInactiveBackgroundColor: theme.headerBackground,
+        tabBarActiveBackgroundColor: theme.headerBackground,
+        tabBarInactiveTintColor: theme.lightText,
+        tabBarActiveTintColor: theme.accentColor1,
+        headerStyle: {
+          backgroundColor: theme.headerBackground,
+        },
+        headerTitleStyle: {
+          color: theme.titleText,
+        },
+        tabBarStyle: Platform.select({
+          ios: {
+            position: 'absolute',
+            paddingBottom: 0,
+          },
+          default: {
+            paddingBottom: 0,
+          },
+        }),
+      }}
+    >
+      <Tabs.Screen
+        name="daily"
+        options={{
+          title: 'Daily',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="practice"
+        options={{
+          title: 'Practice',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="puzzlepiece.extension" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="ranking"
+        options={{
+          title: 'Ranking',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="trophy" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="themes"
+        options={{
+          title: 'Themes',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person" color={color} />,
+        }}
+      />
+    </Tabs>
   );
 }
